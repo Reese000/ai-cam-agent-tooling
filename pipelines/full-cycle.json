@@ -1,0 +1,106 @@
+{
+  "schematicVersion": "0.1.0",
+  "pipeline": {
+    "name": "AI CAM 3.0 — Full Autonomous Cycle",
+    "description": "Runs all 7 phases in sequence with pass/fail cascading, cross-phase consistency checks, and model diversity"
+  },
+  "phases": {
+    "1-research": {
+      "profile": "cam-research",
+      "skills": ["cam-architecture-canvas", "cam-research"],
+      "model": {
+        "primary": "google/gemini-2.5-pro-preview-03-25",
+        "secondary": "anthropic/claude-sonnet-4"
+      },
+      "cohort_split": 0.7,
+      "max_agents": 10,
+      "max_turns": 150,
+      "toolsets": ["web", "file", "delegation", "memory"],
+      "depends_on": [],
+      "deliver": "discord",
+      "cross_phase_check": false
+    },
+    "2-documentation": {
+      "profile": "cam-docs",
+      "skills": ["cam-architecture-canvas", "cam-documentation"],
+      "model": {
+        "primary": "anthropic/claude-sonnet-4",
+        "secondary": "deepseek/deepseek-v4-flash"
+      },
+      "cohort_split": 0.7,
+      "max_agents": 5,
+      "max_turns": 100,
+      "toolsets": ["file", "terminal"],
+      "depends_on": ["1-research"],
+      "deliver": "discord",
+      "cross_phase_check": {
+        "check_against": ["1-research"],
+        "consistency_threshold": 0.8
+      }
+    },
+    "3-planning": {
+      "profile": "cam-plan",
+      "skills": ["cam-architecture-canvas", "cam-planning"],
+      "max_agents": 3,
+      "max_turns": 80,
+      "toolsets": ["file", "delegation", "todo"],
+      "depends_on": ["2-documentation"],
+      "deliver": "discord",
+      "cross_phase_check": {
+        "check_against": ["1-research", "2-documentation"],
+        "consistency_threshold": 0.8
+      }
+    },
+    "4-development": {
+      "profile": "cam-dev",
+      "skills": ["cam-architecture-canvas", "cam-development", "subagent-driven-development"],
+      "model_diversity": ["deepseek/deepseek-v4-flash", "anthropic/claude-sonnet-4", "google/gemini-2.5-pro-preview-03-25"],
+      "max_agents": 10,
+      "max_turns": 80,
+      "toolsets": ["terminal", "file", "delegation", "code_execution"],
+      "depends_on": ["3-planning"],
+      "deliver": "discord",
+      "cross_phase_check": {
+        "check_against": ["2-documentation"],
+        "consistency_threshold": 0.9
+      }
+    },
+    "5-testing": {
+      "profile": "cam-test",
+      "skills": ["cam-architecture-canvas", "cam-testing"],
+      "max_agents": 10,
+      "max_turns": 100,
+      "toolsets": ["terminal", "file"],
+      "depends_on": ["4-development"],
+      "deliver": "discord",
+      "cross_phase_check": false
+    },
+    "6-auditing": {
+      "profile": "cam-audit",
+      "skills": ["cam-architecture-canvas", "cam-audit"],
+      "max_agents": 5,
+      "max_turns": 120,
+      "toolsets": ["file", "search", "terminal"],
+      "depends_on": ["5-testing"],
+      "deliver": "discord",
+      "cross_phase_check": {
+        "check_against": ["1-research", "2-documentation"],
+        "consistency_threshold": 0.7
+      }
+    },
+    "7-criticism": {
+      "profile": "cam-critic",
+      "skills": ["cam-architecture-canvas", "cam-critic"],
+      "max_agents": 1,
+      "max_turns": 60,
+      "toolsets": ["file", "search"],
+      "depends_on": ["6-auditing"],
+      "deliver": "discord",
+      "context_from": [],
+      "cross_phase_check": {
+        "check_against": ["1-research"],
+        "consistency_threshold": 0.6
+      }
+    }
+  }
+}
